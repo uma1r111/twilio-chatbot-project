@@ -6,21 +6,19 @@ Phase 4 (later): will fall back to AI if no rule matches.
 """
 
 from app.bot.rules import get_rule_based_response
+from app.bot.ai_handler import get_ai_response
 
 
 def get_bot_response(message: str) -> str:
     """
     Returns the text the bot should reply with, given the incoming message.
+    Tries rule-based commands first, falls back to AI if no rule matches.
     """
     rule_response = get_rule_based_response(message)
     if rule_response is not None:
         return rule_response
 
-    # Phase 4 will replace this fallback with a real AI call.
-    return (
-        "Sorry, I didn't understand that. "
-        "Type 'Help' to see what I can do."
-    )
+    return get_ai_response(message)
 
 
 def build_twiml_response(reply_text: str) -> str:
