@@ -1,0 +1,20 @@
+SMS Sender: Sent as a clean string: +923001234567
+WhatsApp Sender: Prefixed with the channel name: whatsapp:+923001234567
+
+When a user texts a Twilio number, Twilio’s servers parse the text and forward it to webhook URL as an HTTP POST request.
+Twilio sends this data using the application/x-www-form-urlencoded
+
+MessageSid -> unique 34 character string
+From -> simulated phone number of the user sending the message.
+To -> mock twilio phone number
+Body -> text message payload.
+
+"sending a message" means your Python server creates a structured TwiML (Twilio Markup Language) XML response.
+When backend receives an incoming webhook request, it processes it and immediately prints or returns this XML payload:
+
+<Response>
+    <Message>This is the bot's automated response returned to the user!</Message>
+</Response>
+
+venv activation: .venv\Scripts\activate.bat
+server: uvicorn api.main:app --reload
