@@ -17,4 +17,4 @@ When backend receives an incoming webhook request, it processes it and immediate
 </Response>
 
 venv activation: .venv\Scripts\activate.bat
-server: uvicorn api.main:app --reload
+server: uvicorn app.main:app --reload
