@@ -20,8 +20,8 @@ async def twilio_webhook(
     # 1. Log the incoming message
     print(f"\n[Incoming Message] From: {From} | Body: {Body}")
 
-    # 2. Get rule-based (or AI fallback) response
-    reply_text = get_bot_response(Body)
+    # 2. Get rule-based (or AI fallback with conversation history) response
+    reply_text = get_bot_response(Body, From, db)
 
     # 3. Phase 5: persist this conversation turn
     crud.save_message(

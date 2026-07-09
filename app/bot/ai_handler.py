@@ -28,31 +28,43 @@ def _get_client() -> AzureOpenAI:
     return _client
 
 
-def get_ai_response(message: str) -> str:
+def get_ai_response(message: str, history: list[dict] | None = None) -> str:
     """
     Sends the user's message to Azure OpenAI and returns the reply text.
     Falls back to a friendly error message if the call fails or the
     response is empty, so the bot always replies with something.
+
+    `history` is an optional list of prior turns for this phone number,
+    each formatted as {"incoming_message": ..., "bot_response": ...},
+    oldest first. Used to give the model conversation context.
     """
     if not config.AZURE_OPENAI_API_KEY or not config.ENDPOINT_URL:
         print("[AI Handler] Missing Azure OpenAI credentials in .env")
         return "Sorry, the AI assistant isn't configured right now. Type 'Help' for available commands."
 
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a helpful, concise chatbot replying over "
+                "SMS/WhatsApp. Keep replies short (under 3 sentences) "
+                "since this is a text messaging channel."
+            ),
+        }
+    ]
+
+    if history:
+        for turn in history:
+            messages.append({"role": "user", "content": turn["incoming_message"]})
+            messages.append({"role": "assistant", "content": turn["bot_response"]})
+
+    messages.append({"role": "user", "content": message})
+
     try:
         client = _get_client()
         response = client.chat.completions.create(
             model=config.DEPLOYMENT_NAME,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a helpful, concise chatbot replying over "
-                        "SMS/WhatsApp. Keep replies short (under 3 sentences) "
-                        "since this is a text messaging channel."
-                    ),
-                },
-                {"role": "user", "content": message},
-            ],
+            messages=messages,
             max_tokens=150,
             temperature=0.7,
         )

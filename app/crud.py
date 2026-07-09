@@ -57,6 +57,28 @@ def get_conversation_history(db: Session, phone_number: str) -> list[Message]:
     )
 
 
+def get_recent_history(db: Session, phone_number: str, limit: int = 5) -> list[Message]:
+    """
+    Retrieves the most recent `limit` messages for a phone number,
+    returned oldest-first (ready to feed into the AI as conversation
+    context). Used for Phase 4+ conversation memory, kept separate from
+    get_conversation_history (which returns everything, for the
+    /history endpoint and dashboard).
+    """
+    user = db.query(User).filter(User.phone_number == phone_number).first()
+    if user is None:
+        return []
+
+    recent = (
+        db.query(Message)
+        .filter(Message.user_id == user.id)
+        .order_by(Message.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    return list(reversed(recent))
+
+
 def get_all_users(db: Session) -> list[User]:
     """Retrieves all users (used later by the Phase 6 dashboard)."""
     return db.query(User).all()
