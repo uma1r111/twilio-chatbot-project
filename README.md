@@ -1,6 +1,6 @@
 # Twilio Python Chatbot 
 
-A conversational bot built with **FastAPI**, supporting rule-based commands, AI-powered responses (Azure OpenAI) with multi-turn conversation memory, persistent conversation storage, and a simple web dashboard — built as part of an AI Trainee training project at Imperium Dynamics.
+A conversational bot built with **FastAPI**, supporting rule-based commands, AI-powered responses (Azure OpenAI) with multi-turn conversation memory, persistent conversation storage, and a simple web dashboard.
 
 ![Architecture Diagram](./Twilio_Project.png)
 
