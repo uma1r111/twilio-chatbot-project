@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 from app.bot.responder import get_bot_response, build_twiml_response
 from app.database import Base, engine, get_db
 from app import crud
+from app.dashboard.routes import router as dashboard_router
 
 # Creates users/messages tables on startup if they don't already exist.
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Mock Twilio Chatbot")
+app.include_router(dashboard_router)
 
 
 @app.post("/webhook")

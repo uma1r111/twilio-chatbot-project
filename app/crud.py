@@ -79,6 +79,18 @@ def get_recent_history(db: Session, phone_number: str, limit: int = 5) -> list[M
     return list(reversed(recent))
 
 
+def get_users_with_conversations(db: Session, phone_filter: str = "") -> list[User]:
+    """
+    Retrieves users (optionally filtered by a partial phone number match),
+    ordered by most recent activity first. Each returned User has its
+    `.messages` relationship available for the dashboard to expand.
+    """
+    query = db.query(User)
+    if phone_filter:
+        query = query.filter(User.phone_number.ilike(f"%{phone_filter}%"))
+    return query.order_by(User.first_seen.desc()).all()
+
+
 def get_all_users(db: Session) -> list[User]:
     """Retrieves all users (used later by the Phase 6 dashboard)."""
     return db.query(User).all()
