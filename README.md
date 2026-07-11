@@ -4,6 +4,13 @@ A conversational bot built with **FastAPI**, supporting rule-based commands, AI-
 
 ![Architecture Diagram](./Twilio_Project.png)
 
+**Request flow:**
+1. A message (`From`, `Body`) hits `POST /webhook`, simulating a Twilio-forwarded SMS/WhatsApp message.
+2. `responder.py` first checks `rules.py` for a known command (Hi, Help, Time, Date, About, Services) — these are stateless and return instantly.
+3. If no rule matches, the message is forwarded to `ai_handler.py`, which pulls the last 5 turns of conversation history for that phone number and sends the full multi-turn context to Azure OpenAI.
+4. The response (rule-based or AI-generated) is saved to the database, tied to the sender's phone number.
+5. A TwiML XML response is returned, matching exactly what Twilio expects from a webhook.
+
 ---
 
 ## Table of Contents
@@ -54,70 +61,6 @@ During Phase 1, real Twilio, Plivo, and Vonage account signup/verification were 
 **Decision:** the Twilio webhook layer was simulated locally using Postman/cURL, sending HTTP POST requests with the same `application/x-www-form-urlencoded` payload structure (`From`, `Body`) that Twilio sends to a webhook, and returning the same TwiML XML response format Twilio expects.
 
 This preserves all the actual learning outcomes of the project — REST APIs, webhooks, database CRUD, AI integration, environment variables — since none of that logic depends on Twilio's infrastructure actually being reachable. The moment real Twilio access is available, this backend requires **zero code changes** — only pointing a real Twilio phone number/WhatsApp Sandbox webhook URL at the deployed `/webhook` endpoint.
-
----
-
-## Architecture
-
-```mermaid
-flowchart TD
-    subgraph Client["Client Layer"]
-        A[Postman / Mock Twilio<br/>simulates WhatsApp-SMS webhook]
-    end
-
-    subgraph API["FastAPI Application"]
-        B["/webhook<br/>POST endpoint"]
-        C["/history/{phone_number}<br/>GET endpoint"]
-        D["/dashboard<br/>GET endpoint"]
-    end
-
-    subgraph Bot["Bot Logic Layer"]
-        E[responder.py<br/>get_bot_response]
-        F[rules.py<br/>Rule-based matcher]
-        G[ai_handler.py<br/>Azure OpenAI fallback]
-    end
-
-    subgraph Data["Data Layer"]
-        H[(SQLite<br/>database.db)]
-        I[crud.py<br/>get_or_create_user<br/>save_message<br/>get_recent_history<br/>get_conversation_history<br/>get_users_with_conversations]
-        J[models.py<br/>User / Message tables]
-    end
-
-    subgraph AI["External AI Service"]
-        K[Azure OpenAI<br/>gpt-4o-mini]
-    end
-
-    subgraph Dashboard["Dashboard UI"]
-        L[dashboard.html<br/>Jinja2 template]
-    end
-
-    A -->|"From, Body<br/>x-www-form-urlencoded"| B
-    B --> E
-    E --> F
-    F -->|"rule matched"| E
-    F -->|"no match"| G
-    G -->|"fetch recent turns"| I
-    G -->|"multi-turn messages[]"| K
-    K -->|"AI reply"| G
-    G --> E
-    E -->|"reply_text"| B
-    B -->|"save_message"| I
-    I --> J
-    J --> H
-    B -->|"TwiML XML response"| A
-
-    C --> I
-    D --> I
-    I -->|"grouped users + counts"| D
-    D --> L
-```
-
-**Request flow:**
-1. A message (`From`, `Body`) hits `POST /webhook`, simulating a Twilio-forwarded SMS/WhatsApp message.
-2. `responder.py` first checks `rules.py` for a known command (Hi, Help, Time, Date, About, Services) — these are stateless and return instantly.
-3. If no rule matches, the message is forwarded to `ai_handler.py`, which pulls the last 5 turns of conversation history for that phone number and sends the full multi-turn context to Azure OpenAI.
-4. The response (rule-based or AI-generated) is saved to the database, tied to the sender's phone number.
-5. A TwiML XML response is returned, matching exactly what Twilio expects from a webhook.
 
 ---
 
